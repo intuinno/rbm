@@ -2,3 +2,6 @@
 __pycache__/
 data/
 *.ps
+filter_tile, cmap='gray'
+.DS_Store
+models/
