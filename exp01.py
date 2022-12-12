@@ -81,15 +81,17 @@ def train(dataloader, model, optimizer, persistent):
         v, model_v, pre_v_h, persistent = model(X, persistent)
         model.train()
         fv = model.calc_free_energy(v)
+        # chain_end = model_v.detach()
         model_fv = model.calc_free_energy(model_v)
         loss = torch.mean(fv - model_fv)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        # with torch.no_grad():
+        #     reconstruction_cost += get_reconstruction_cost(v, pre_v_h)
         model.eval()
-        reconstruction_cost += get_reconstruction_cost(v, pre_v_h)
-       
-    return reconstruction_cost.mean(), persistent
+        reconstruction_cost += get_reconstruction_cost(v, pre_v_h) 
+    return reconstruction_cost/size, persistent
         
 def get_reconstruction_cost(target, pred):
     cross_entropy = F.binary_cross_entropy(pred, target, reduction='sum')
@@ -140,18 +142,19 @@ def save_filter_with_raster(epoch):
     
     
 def sample_rbm(model, test_loader, epoch, num_sample_row=20):
-    sample_iteration = 2
-    persistent_chain = torch.zeros(batch_size, n_hid)
-    v = next(iter(test_loader))[0]
+    with torch.no_grad():
+        sample_iteration = 2
+        persistent_chain = torch.zeros(batch_size, n_hid)
+        v = next(iter(test_loader))[0]
 
-    original = make_grid(v.view(batch_size, 1, 28,28).data, nrow=batch_size)
-    
-    for i in range(num_sample_row):
-        v, model_v, p_v_h = model.sample(v,sample_iteration)      
-        sample = make_grid(p_v_h.view(batch_size, 1, 28,28).data, nrow=batch_size)
-        original = torch.cat((original, sample), 1)
+        original = make_grid(v.view(batch_size, 1, 28,28).data, nrow=batch_size)
+        
+        for i in range(num_sample_row):
+            v, model_v, p_v_h = model.sample(v,sample_iteration)      
+            sample = make_grid(p_v_h.view(batch_size, 1, 28,28).data, nrow=batch_size)
+            original = torch.cat((original, sample), 1)
 
-    save_tensor(original, f'sample_at_{epoch}.png')
+        save_tensor(original, f'sample_at_{epoch}.png')
         
  
 
@@ -181,7 +184,7 @@ if not os.path.isdir(expDir):
 os.chdir(expDir)
 
 
-model = RBM(n_vis=n_vis, n_hid=n_hid, kCD=k)
+model = RBM(n_vis=n_vis, n_hid=n_hid, kCD=k).to(device)
 optimizer = torch.optim.SGD(model.parameters(), lr=lr)
 persistent_chain = torch.zeros(batch_size, n_hid)
 save_filter(-1)
