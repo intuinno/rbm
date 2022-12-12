@@ -27,14 +27,14 @@ class RBM(nn.Module):
             h_v, pre_h_v = self.sample_h_given_v(v_h)
             chain_start = h_v
         else:
-            chain_start = persistent
+            chain_start = persistent.detach()
             
         v_h, pre_v_h = self.sample_v_given_h(chain_start)
         
         for _ in range(self.kCD-1):
             h_v, pre_h_v = self.sample_h_given_v(v_h)
             v_h, pre_v_h = self.sample_v_given_h(h_v)
-        return v_flat, v_h, pre_v_h, h_v.detach()
+        return v_flat.detach(), v_h, pre_v_h, h_v.detach()
     
     def sample(self, v, k):
         v_flat = self.flatten(v)

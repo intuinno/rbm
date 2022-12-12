@@ -1,4 +1,5 @@
 .ipynb_checkpoints/
+output/
 __pycache__/
 data/
 *.ps

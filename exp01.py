@@ -91,7 +91,7 @@ def train(dataloader, model, optimizer, persistent):
         #     reconstruction_cost += get_reconstruction_cost(v, pre_v_h)
         model.eval()
         reconstruction_cost += get_reconstruction_cost(v, pre_v_h) 
-    return reconstruction_cost/size, persistent
+    return reconstruction_cost.mean(), persistent
         
 def get_reconstruction_cost(target, pred):
     cross_entropy = F.binary_cross_entropy(pred, target, reduction='sum')
@@ -186,7 +186,7 @@ os.chdir(expDir)
 
 model = RBM(n_vis=n_vis, n_hid=n_hid, kCD=k).to(device)
 optimizer = torch.optim.SGD(model.parameters(), lr=lr)
-persistent_chain = torch.zeros(batch_size, n_hid)
+persistent_chain = torch.zeros(batch_size, n_hid, requires_grad=False)
 save_filter(-1)
 print("Starting training")
 sample_rbm(model, test_loader, -1)
